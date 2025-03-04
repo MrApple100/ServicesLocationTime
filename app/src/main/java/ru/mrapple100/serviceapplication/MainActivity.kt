@@ -36,8 +36,6 @@ class MainActivity : ComponentActivity() {
     lateinit var context: Context
     var isBound = false
     lateinit var boundService: BaseBoundService
-    lateinit var locationService: MyLocationService
-
     val locationArray = arrayListOf(0.0,0.0)
 
     val myConnection = object : ServiceConnection{
@@ -45,19 +43,6 @@ class MainActivity : ComponentActivity() {
             val binder = service as BaseBoundService.MyLocalBinder
 
             boundService = binder.getService()
-            isBound = true
-        }
-
-        override fun onServiceDisconnected(p0: ComponentName?) {
-            isBound = false
-        }
-
-    }
-    val myConnectionForLocation = object : ServiceConnection{
-        override fun onServiceConnected(p0: ComponentName?, service: IBinder?) {
-            val binder = service as MyLocationService.MyLocalBinder
-
-            locationService = binder.getService()
             isBound = true
         }
 
@@ -77,25 +62,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         context = this
-        launcher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        launcher.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION))
 
-//        val intent = Intent(this,BaseBoundService::class.java)
-//        bindService(intent,myConnection, BIND_AUTO_CREATE)
+        val intent = Intent(this,BaseBoundService::class.java)
+        bindService(intent,myConnection, BIND_AUTO_CREATE)
         val intent2 = Intent(this, MyLocationService::class.java)
-        bindService(intent2,myConnectionForLocation, BIND_AUTO_CREATE)
+        startService(intent2)
 
 
 
         val stateText = mutableStateOf("time")
         val stateLocation = mutableStateOf("0/0")
 
-        GlobalScope.async {
+        thread {
             while(true){
                 Thread.sleep(1000)
-//                if(isBound) {
-//                    stateText.value = boundService.getCurrentTime()
-//                }
-                locationService.getLocation()
+                if(isBound) {
+                    stateText.value = boundService.getCurrentTime()
+                }
+              //  startService(intent2)
+
                 stateLocation.value = "${locationArray[0]} / ${locationArray[1]}"
             }
         }
@@ -127,7 +113,7 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         unbindService(myConnection)
     }
-    val launcher = registerForActivityResult(ActivityResultContracts.RequestPermission(),
+    val launcher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions(),
         ActivityResultCallback {
 
         })
