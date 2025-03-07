@@ -9,6 +9,7 @@ import android.location.Geocoder
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -16,6 +17,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MyLocationService: Service(),LocationListener {
@@ -38,7 +41,7 @@ class MyLocationService: Service(),LocationListener {
         Log.d("SENDBROID","ONCREATE21111111111")
         GlobalScope.async {
             while (true) {
-                Thread.sleep(5000)
+                delay(5000)
                 if (ActivityCompat.checkSelfPermission(
                         this@MyLocationService,
                         Manifest.permission.ACCESS_FINE_LOCATION
@@ -53,16 +56,16 @@ class MyLocationService: Service(),LocationListener {
                 locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
 
-                val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.FUSED_PROVIDER)
                 val isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
 
                 val provider = when {
-                    isGpsEnabled -> LocationManager.GPS_PROVIDER
+                    isGpsEnabled -> LocationManager.FUSED_PROVIDER
                     isNetworkEnabled -> LocationManager.NETWORK_PROVIDER
                     else -> null
                 }
 
-                withContext(Dispatchers.Main) {
+                GlobalScope.launch(Dispatchers.Main) {
                     locationManager.requestLocationUpdates(
                         provider!!,
                         5000,
@@ -88,6 +91,7 @@ class MyLocationService: Service(),LocationListener {
         sendBroadcast(intent)
     }
 
+
     override fun onDestroy() {
         super.onDestroy()
         try {
@@ -95,6 +99,11 @@ class MyLocationService: Service(),LocationListener {
         } catch (e: SecurityException) {
             e.printStackTrace()
         }
+    }
+
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+        super.onStatusChanged(provider, status, extras)
+        Log.d("STATUS",""+status)
     }
 
 }

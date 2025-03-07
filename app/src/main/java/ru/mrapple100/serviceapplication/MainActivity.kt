@@ -101,7 +101,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        registerReceiver(receiver, IntentFilter(MyLocationService.INTENT_LOCATION))
+        registerReceiver(receiver, IntentFilter(MyLocationService.INTENT_LOCATION),
+            RECEIVER_EXPORTED)
     }
 
     override fun onPause() {
